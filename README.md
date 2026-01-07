@@ -39,7 +39,7 @@ Este proyecto lee el número de teléfono desde una hoja de cálculo pública pa
     ```
 2.  Abrir `index.html` en tu navegador.
 
-### Despliegue Recomendado (Netlify/Vercel)
+### Despliegue Recomendado (Netlify)
 Este proyecto es estático, por lo que se recomienda desplegar en **Netlify** conectado a este repositorio.
 
 1.  Conectar repositorio a Netlify.

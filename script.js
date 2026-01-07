@@ -3,63 +3,63 @@
 // 1. PEGA AQUÍ EL ENLACE .CSV DE GOOGLE SHEETS
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT9bsTOs6nCbKAd0ROAK_8DXhqYFvr_lbG4HGDj-C7A_yhXc0qntOgVqSX4HuoIjkrytENkee-2Iec7/pub?gid=0&single=true&output=csv'; 
 
-// 2. NÚMERO DE RESPALDO (Por si falla todo)
+// --- CONFIGURACIÓN ---
 const FALLBACK_NUMBER = '5491100000000'; 
-
-// 3. MENSAJE PREDETERMINADO
+const FALLBACK_BONUS = '$14.000'; // Valor por defecto si falla todo
 const MESSAGE = "Hola, quiero reclamar mi bono de bienvenida.";
 
-// --- LÓGICA DEL PROGRAMA ---
+// --- ELEMENTOS DEL DOM ---
 const btn = document.getElementById('cta-button');
 const btnText = document.getElementById('btn-text');
+const bonusElement = document.getElementById('bonus-text'); 
 
-async function updatePhoneNumber() {
+async function updateContent() {
     try {
-        console.log("Consultando número...");
-        
-        // Agregamos un timestamp para evitar que el navegador guarde caché vieja
+        console.log("Consultando datos...");
+        // Truco anti-caché para que actualice al instante
         const uniqueUrl = `${SHEET_URL}&t=${new Date().getTime()}`;
         
         const response = await fetch(uniqueUrl);
-        
-        if (!response.ok) throw new Error("Error de red al conectar con Google Sheets");
+        if (!response.ok) throw new Error("Error de red");
 
         const data = await response.text();
-        
-        // Tomamos el contenido de la primera celda (A1)
-        let rawContent = data.split('\n')[0];
+        const rows = data.split('\n');
 
-        // --- MAGIA DE LIMPIEZA ---
-        // Esta línea elimina TODO lo que no sea un número (letras, espacios, +, -, ())
-        let cleanNumber = rawContent.replace(/\D/g, ''); 
+        // --- 1. PROCESAR TELÉFONO (Celda A1) ---
+        let rawPhone = rows[0] || '';
+        let cleanNumber = rawPhone.replace(/\D/g, ''); 
         
-        console.log("Número crudo:", rawContent);
-        console.log("Número limpio:", cleanNumber);
-
-        // Validación: Si después de limpiar quedan menos de 8 números, algo está mal
         if (!cleanNumber || cleanNumber.length < 8) {
-            throw new Error("El número en el Excel no es válido");
+            cleanNumber = FALLBACK_NUMBER;
         }
-
         setButtonLink(cleanNumber);
 
+        // --- 2. PROCESAR BONO (Celda A2) ---
+        // Tomamos el dato crudo (ej: "20.000" o "50000")
+        let rawAmount = rows[1] ? rows[1].trim() : '';
+        
+        // Limpiamos comillas por si el CSV las trae
+        rawAmount = rawAmount.replace(/^"|"$/g, '');
+
+        if (rawAmount.length > 0) {
+            // AQUÍ ESTÁ EL CAMBIO: Agregamos '$' y 'ARS' automáticamente
+            bonusElement.innerText = `$${rawAmount} ARS`;
+            console.log("Bono actualizado a:", `$${rawAmount} ARS`);
+        }
+
     } catch (error) {
-        console.warn("Hubo un problema, usando número de respaldo:", error);
+        console.warn("Error obteniendo datos, usando valores por defecto.");
         setButtonLink(FALLBACK_NUMBER);
+        bonusElement.innerText = FALLBACK_BONUS;
     }
 }
 
 function setButtonLink(number) {
-    // Construir enlace de WhatsApp
     const finalUrl = `https://wa.me/${number}?text=${encodeURIComponent(MESSAGE)}`;
-    
-    // Actualizar botón en el DOM
     btn.href = finalUrl;
     btnText.innerText = "RECLAMAR MI BONO";
-    
-    // Habilitar el botón visualmente
     btn.classList.add('active'); 
 }
 
-// Ejecutar la función apenas cargue el script
-updatePhoneNumber();
+// Ejecutar al iniciar
+updateContent();
