@@ -5,13 +5,25 @@ const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT9bsTOs6nCbK
 const FALLBACK_NUMBER = '5491100000000'; 
 const FALLBACK_BONUS = '---------';
 const FALLBACK_SPINS = '-------'; // Valor por defecto de tiros
-const MESSAGE = "Hola, quiero reclamar mi bono de bienvenida y mis tiros gratis.";
+const BASE_MESSAGE = "Hola, quiero reclamar mi bono de bienvenida y mis tiros gratis.";
+
 
 // --- ELEMENTOS DEL DOM ---
 const btn = document.getElementById('cta-button');
 const btnText = document.getElementById('btn-text');
 const bonusElement = document.getElementById('bonus-text'); 
 const spinsElement = document.getElementById('spins-text'); // Elemento nuevo
+// --- EVENTO GA4: click a WhatsApp ---
+btn.addEventListener("click", () => {
+  if (typeof gtag === "function") {
+    gtag("event", "click_whatsapp", {
+      event_category: "lead",
+      event_label: "cta_whatsapp",
+      page_location: window.location.href
+    });
+  }
+});
+
 
 async function updateContent() {
     try {
@@ -54,10 +66,11 @@ async function updateContent() {
 }
 
 function setButtonLink(number) {
-    const finalUrl = `https://wa.me/${number}?text=${encodeURIComponent(MESSAGE)}`;
-    btn.href = finalUrl;
-    btnText.innerText = "RECLAMAR MI BONO";
-    btn.classList.add('active'); 
+  const finalUrl = `https://wa.me/${number}?text=${encodeURIComponent(BASE_MESSAGE)}`;
+  btn.href = finalUrl;
+  btnText.innerText = "RECLAMAR MI BONO";
+  btn.classList.add('active'); 
 }
+
 
 updateContent();
