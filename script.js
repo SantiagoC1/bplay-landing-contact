@@ -4,7 +4,7 @@
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT9bsTOs6nCbKAd0ROAK_8DXhqYFvr_lbG4HGDj-C7A_yhXc0qntOgVqSX4HuoIjkrytENkee-2Iec7/pub?gid=0&single=true&output=csv'; 
 
 // 2. LINK PARA GUARDAR (El de Apps Script)
-const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxPPfu8kRSjkqlmgG1PRPFqAf444wZZiu7-dUhlemAfw7-0Ao1z6xEvvOTk-e3hbTEOrw/exec';
+const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzghewipW-BXWrLDy4Rv5T20322BkD15UjmoryzHTO9LgcSj0x4G7sOW2JRTWWaqzCXYw/exec';
 
 const FALLBACK_NUMBER = '5491100000000'; 
 const FALLBACK_BONUS = '---------';
@@ -19,29 +19,32 @@ const spinsElement = document.getElementById('spins-text');
 
 // --- FUNCIÓN: ENVIAR AL EXCEL (TRACKER) ---
 function trackToExcel(accion) {
-    if (!WEBHOOK_URL.includes('script.google.com')) return; 
+    function trackToExcel(accion) {
+  if (!WEBHOOK_URL.includes("script.google.com")) return;
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const fuente = urlParams.get('utm_source') || document.referrer || 'Directo';
-    
-    // Detectar móvil de forma robusta
-    const esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 'Móvil' : 'PC';
-    
-    const datos = {
-        fuente: fuente,
-        dispositivo: esMovil,
-        accion: accion
-    };
+  const urlParams = new URLSearchParams(window.location.search);
+  const fuente = urlParams.get("utm_source") || document.referrer || "Directo";
+  const dispositivo = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? "Móvil" : "PC";
 
-    // keepalive: true es LA CLAVE para que no se pierdan datos al salir
-    fetch(WEBHOOK_URL, {
-        method: 'POST',
-        mode: 'no-cors', 
-        keepalive: true, 
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(datos)
-    }).then(() => console.log(`Tracker enviado: ${accion}`))
-      .catch(err => console.error('Error Tracker', err));
+  const payload = JSON.stringify({ fuente, dispositivo, accion });
+
+  // ✅ 1) Beacon (mejor para trackers)
+  if (navigator.sendBeacon) {
+    const blob = new Blob([payload], { type: "application/json" });
+    navigator.sendBeacon(WEBHOOK_URL, blob);
+    return;
+  }
+
+  // ✅ 2) Fallback
+  fetch(WEBHOOK_URL, {
+    method: "POST",
+    mode: "no-cors",
+    keepalive: true,
+    headers: { "Content-Type": "application/json" },
+    body: payload
+  }).catch(() => {});
+}
+
 }
 
 // --- EVENTO CLIC (WhatsApp + GA4 + Excel) ---
@@ -63,7 +66,7 @@ btn.addEventListener("click", (e) => {
 
     // 3. Redirigir
     // Damos 600ms para asegurar que los scripts corran
-    setTimeout(() => { window.location.href = url; }, 600);
+    setTimeout(() => { window.location.href = url; }, 80);
 });
 
 // --- CARGA DE DATOS ---
@@ -73,7 +76,7 @@ async function updateContent() {
         trackToExcel('Visita Web');
 
         console.log("Cargando datos...");
-        const uniqueUrl = `${SHEET_URL}&t=${new Date().getTime()}`;
+        const uniqueUrl = `${SHEET_URL}&t=${Math.floor(Date.now() / 60000)}`;
         
         const response = await fetch(uniqueUrl);
         if (!response.ok) throw new Error("Error de red");
