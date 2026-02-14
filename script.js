@@ -107,13 +107,19 @@ async function updateContent() {
     // Registrar visita
     try { trackToExcel("Visita Web"); } catch (e) {}
 
-    const uniqueUrl = `${SHEET_URL}&t=${Math.floor(Date.now() / 60000)}`;
-    const response = await fetch(uniqueUrl);
+    // Agregamos un timestamp único para saltar el cache de Netlify
+    const uniqueUrl = `${SHEET_URL}&nocache=${Date.now()}`;
+    
+    const response = await fetch(uniqueUrl, {
+      method: 'GET',
+      mode: 'cors', // Forzamos modo cors
+      credentials: 'omit'
+    });
 
     if (!response.ok) throw new Error("Error de red");
 
     const data = await response.text();
-    const rows = data.split("\n").map((r) => r.trim());
+    const rows = data.split("\n").map((r) => r.trim().replace(/^"|"$/g, '')); // Limpia comillas extras
 
     // 1) Teléfono
     let rawPhone = rows[0] || "";
@@ -122,28 +128,22 @@ async function updateContent() {
     setButtonLink(cleanNumber);
 
     // 2) Bono
-    let rawAmount = rows[1] ? rows[1].trim() : "";
+    let rawAmount = rows[1] || "";
     let cleanAmount = rawAmount.replace(/\D/g, "");
     if (cleanAmount.length > 0) {
       let formatted = new Intl.NumberFormat("es-AR").format(cleanAmount);
       if (bonusElement) bonusElement.innerText = `$${formatted} ARS`;
-    } else {
-      if (bonusElement) bonusElement.innerText = FALLBACK_BONUS;
     }
 
     // 3) Giros
-    let rawSpins = rows[2] ? rows[2].trim() : "";
+    let rawSpins = rows[2] || "";
     let cleanSpins = rawSpins.replace(/\D/g, "");
-    if (cleanSpins.length > 0) {
-      if (spinsElement) spinsElement.innerText = cleanSpins;
-    } else {
-      if (spinsElement) spinsElement.innerText = FALLBACK_SPINS;
+    if (cleanSpins.length > 0 && spinsElement) {
+      spinsElement.innerText = cleanSpins;
     }
   } catch (error) {
-    console.warn("Usando backup por error:", error);
+    console.error("Error cargando datos:", error);
     setButtonLink(FALLBACK_NUMBER);
-    if (bonusElement) bonusElement.innerText = FALLBACK_BONUS;
-    if (spinsElement) spinsElement.innerText = FALLBACK_SPINS;
   }
 }
 
