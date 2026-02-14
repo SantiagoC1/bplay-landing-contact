@@ -104,45 +104,39 @@ if (btn) {
 // --- CARGA DE DATOS ---
 async function updateContent() {
   try {
-    // Registrar visita
-    try { trackToExcel("Visita Web"); } catch (e) {}
-
-    // Agregamos un timestamp único para saltar el cache de Netlify
-    const uniqueUrl = `${SHEET_URL}&nocache=${Date.now()}`;
+    const uniqueUrl = `${SHEET_URL}&t=${Date.now()}`;
     
-    const response = await fetch(uniqueUrl, {
-      method: 'GET',
-      mode: 'cors', // Forzamos modo cors
-      credentials: 'omit'
-    });
-
-    if (!response.ok) throw new Error("Error de red");
+    // Intentamos la carga normal
+    const response = await fetch(uniqueUrl);
+    if (!response.ok) throw new Error("Error en respuesta");
 
     const data = await response.text();
-    const rows = data.split("\n").map((r) => r.trim().replace(/^"|"$/g, '')); // Limpia comillas extras
+    // Limpiamos posibles comillas de Excel
+    const rows = data.split("\n").map(r => r.trim().replace(/^"|"$/g, ''));
 
-    // 1) Teléfono
-    let rawPhone = rows[0] || "";
-    let cleanNumber = rawPhone.replace(/\D/g, "");
-    if (!cleanNumber || cleanNumber.length < 8) cleanNumber = FALLBACK_NUMBER;
-    setButtonLink(cleanNumber);
+    // 1) Actualizar Teléfono
+    if (rows[0]) {
+      const cleanNumber = rows[0].replace(/\D/g, "");
+      setButtonLink(cleanNumber || FALLBACK_NUMBER);
+    }
 
-    // 2) Bono
-    let rawAmount = rows[1] || "";
-    let cleanAmount = rawAmount.replace(/\D/g, "");
-    if (cleanAmount.length > 0) {
-      let formatted = new Intl.NumberFormat("es-AR").format(cleanAmount);
+    // 2) Actualizar Bono
+    if (rows[1]) {
+      const cleanAmount = rows[1].replace(/\D/g, "");
+      const formatted = new Intl.NumberFormat("es-AR").format(cleanAmount);
       if (bonusElement) bonusElement.innerText = `$${formatted} ARS`;
     }
 
-    // 3) Giros
-    let rawSpins = rows[2] || "";
-    let cleanSpins = rawSpins.replace(/\D/g, "");
-    if (cleanSpins.length > 0 && spinsElement) {
-      spinsElement.innerText = cleanSpins;
+    // 3) Actualizar Giros
+    if (rows[2] && spinsElement) {
+      spinsElement.innerText = rows[2].replace(/\D/g, "");
     }
+
   } catch (error) {
-    console.error("Error cargando datos:", error);
+    console.error("Fallo de carga, usando valores fijos:", error);
+    // Si falla el fetch, al menos ponemos valores legibles de respaldo
+    if (bonusElement) bonusElement.innerText = "$12.000 ARS";
+    if (spinsElement) spinsElement.innerText = "20";
     setButtonLink(FALLBACK_NUMBER);
   }
 }
