@@ -63,6 +63,10 @@ btn.addEventListener("click", (e) => {
 
     // 2. Excel (Tracker)
     trackToExcel('CLIC WHATSAPP ✅');
+    // Añadir esto dentro del evento click del botón en tu script.js
+    gtag('event', 'conversion', {
+        'send_to': 'AW-17864184568/FUOuCMuoiuAbEPilp8ZC'
+    });
 
     // 3. Redirigir
     // Damos 600ms para asegurar que los scripts corran
