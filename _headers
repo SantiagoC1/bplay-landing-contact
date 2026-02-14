@@ -1,2 +1,5 @@
 /*
-  Content-Security-Policy: script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://googleads.g.doubleclick.net https://www.googleadservices.com; connect-src 'self' https://www.google-analytics.com https://stats.g.doubleclick.net https://www.google.com https://www.google.com.ar; img-src 'self' data: https://www.google-analytics.com https://www.googletagmanager.com https://www.google.com https://www.google.com.ar;
+  Access-Control-Allow-Origin: *
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  Content-Security-Policy: script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://googleads.g.doubleclick.net https://www.googleadservices.com; connect-src 'self' https://www.google-analytics.com https://stats.g.doubleclick.net https://www.google.com https://www.google.com.ar https://docs.google.com; img-src 'self' data: blob: https://www.google-analytics.com https://www.googletagmanager.com https://www.google.com https://www.google.com.ar;
